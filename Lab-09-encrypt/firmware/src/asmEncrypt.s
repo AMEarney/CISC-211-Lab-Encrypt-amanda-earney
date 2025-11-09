@@ -10,7 +10,7 @@
 .type nameStr,%gnu_unique_object
     
 /*** STUDENTS: Change the next line to your name!  **/
-nameStr: .asciz "Inigo Montoya"  
+nameStr: .asciz "Amanda Earney"  
 .align
  
 /* initialize a global variable that C can access to print the nameStr */
@@ -89,10 +89,44 @@ asmEncrypt:
     push {r4-r11,LR}
     
     /* YOUR asmEncrypt CODE BELOW THIS LINE! VVVVVVVVVVVVVVVVVVVVV  */
-
-
-
+    LDR r4, =cipherText /* each new encrypted char will be put at address in r4 */
     
+loop:
+    LDRB r5, [r0], 1 /* gets the current character of the input, increments after loading */
+    CMP r5, 0 
+    BEQ endLoop /* if the char is null, entire text has been copied */
+    CMP r5, 65 
+    BLO notLetter /* if less than 65, char shouldn't be shifted */
+    CMP r5, 123 /* should be 123 due to HS also checking if same */
+    BHS notLetter /* if greater than 122, char shouldn't be shifted */
+    CMP r5, 91 /* should be 91 to include 90 in shiftable characters */
+    BLO uppercase /* if less than 91 and got here, char is uppercase */
+    CMP r5, 97 
+    BHS lowercase /* if greater than 97 and got here, char is lowercase */
+    B notLetter /* if got here, char shouldn't be shifted */
+    
+uppercase:
+    ADD r5, r5, r1 /* adds the key to the current char */
+    CMP r5, 91 /* should be 91 due to HS checking if same */
+    SUBHS r5, r5, 26 /* if out of bounds, corrects the shifted char */
+    STRB r5, [r4], 1 /* stores the shifted char into output, increments after loading */
+    B loop /* goes through loop with next char */
+    
+lowercase:
+    ADD r5, r5, r1 /* adds the key to the current char */
+    CMP r5, 123 /* should be 123 due to HS checking if same */
+    SUBHS r5, r5, 26 /* if out of bounds, corrects the shifted char */
+    STRB r5, [r4], 1 /* stores the shifted char into output, increments after loading */
+    B loop /* goes through loop with next char */
+    
+notLetter:
+    STRB r5, [r4], 1 /* puts the unmodified char into the output, increments after loading */
+    B loop /* goes through loop with next char */
+    
+endLoop:
+    MOV r6, 0
+    STRB r6, [r4] /* adds a null char to end of cipherText */
+    LDR r0, =cipherText /* returns cipherText address in r0 */
     /* YOUR asmEncrypt CODE ABOVE THIS LINE! ^^^^^^^^^^^^^^^^^^^^^  */
 
     /* restore the caller's registers, as required by the ARM calling convention */
